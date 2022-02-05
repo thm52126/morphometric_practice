@@ -1,0 +1,93 @@
+---
+title: "Morphometric practice"
+author: "Thomas H. Murphy"
+date: "2/1/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+This is a short tutorial and how to work with, plot, and analyze a morphological dataset for morphometric study.
+
+First, we will install and / or load all R packages needed. If the packages listed are currently not installed, then go to your R Studio Console and type the following command:
+
+install.packages("ggplot2")
+
+For future use, just subsitute the ggplot2 with another package name to install it. 
+
+```{r load_packages}
+library(ggplot2)
+library(gridExtra)
+```
+
+## Getting started
+
+The dataset we will work with for practice is already found in the R environment. It is called iris, which contains measurements of three Iris species. It contains five columns, labeled Sepal.Length, Sepal.Width, Petal.Length, Petal.Width, and Species. The last column is a species label, which will not be subjected to morphological analysis. Rather, it will be useful for partitioning data for visualizing. 
+
+The first thing I always like to do with datasets is to get a feel for them. I'm going to use the ggplot2 package to construt boxplots. 
+
+```{r univariate, echo=T}
+ggplot(iris, aes(x=Species, y=Sepal.Length))+
+  geom_boxplot()
+
+```
+
+The plot above is the simplest way we can do this in R, but can also make modifications. We can modify these plots to change colors, symbols, etc. 
+
+```{r univariate2, echo=T}
+ggplot(iris, aes(x=Species, y=Sepal.Length, fill=Species))+
+  geom_boxplot()
+
+```
+
+We can use geom_jitter to plot the distribution of the measurements throughout the plot. 
+
+```{r univariate3, echo=T}
+ggplot(iris, aes(x=Species, y=Sepal.Length, fill=Species))+
+  geom_boxplot()+
+  geom_jitter(alpha=0.7)
+
+```
+
+So, if we wanted to place four plots into the same grid, we could do this by assigning each plot to a variable and calling them in the function grid.arrange() from the package gridExtra(). Note that I have assigned the legend.position as "none" under the ggplot theme. This just supresses the legend from appearing for all four plots across the grid.
+
+```{r}
+sepL_plot<-ggplot(iris, aes(x=Species, y=Sepal.Length, fill=Species))+
+  geom_boxplot()+
+  theme(legend.position = "none")
+sepW_plot<-ggplot(iris, aes(x=Species, y=Sepal.Width, fill=Species))+
+  geom_boxplot()+
+  theme(legend.position = "none")
+petL_plot<-ggplot(iris, aes(x=Species, y=Petal.Length, fill=Species))+
+  geom_boxplot()+
+  theme(legend.position = "none")
+petW_plot<-ggplot(iris, aes(x=Species, y=Petal.Width, fill=Species))+
+  geom_boxplot()+
+  theme(legend.position = "none")
+grid.arrange(sepL_plot,sepW_plot, petL_plot, petW_plot,ncol=2)
+
+```
+
+An advantage of viewing our data in a univariate method is that we can see trends across all of our different characters, which can be helpful for understanding how species differ from one another. For example, we can see that Iris setosa has markedly narrower petals than I. versicolor and I. virginica. This does, however, make it difficult to understand morphological variation across all characters measured. This is when we turn to multivariate ordination methods. Here, we will use principal componenents analysis (PCA). There are other types of multivariate ordination, but here we will cover the most commonly employed one. 
+
+```{r}
+
+iris_PCA <- prcomp(iris[,1:4],center = T,scale. = T)
+pca_points<-as.data.frame(cbind(iris_PCA$x, as.character(iris[,5])))
+
+pca_points$PC1<-as.numeric(pca_points$PC1)
+pca_points$PC2<-as.numeric(pca_points$PC2)
+pca_points$PC3<-as.numeric(pca_points$PC3)
+pca_points$PC4<-as.numeric(pca_points$PC4)
+colnames(pca_points) <- c("PC1", "PC2", "PC3", "PC4", "Species")
+
+ggplot(pca_points, aes(x=PC1, y=PC2, color=Species))+
+  geom_point()+
+  stat_ellipse()
+```
+
+Now we see the plot of samples in multivariate space (this one is just the first two axes).
